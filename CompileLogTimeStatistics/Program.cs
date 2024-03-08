@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
@@ -32,7 +33,7 @@ string style = @"* {
 }
 
 .compile-stats-item-name {
-  width: 300px;
+  width: 600px;
 }
 
 .compile-stats-item-time {
@@ -53,7 +54,7 @@ string webTable = $"<html><head><style>{style}</style></head><body><div class=\"
 foreach (string file in logFiles)
 {
     string mapName = file.Replace(".log", "");
-    Console.WriteLine(mapName);
+    Console.WriteLine($"Processing {mapName}");
 
     if ((File.GetAttributes(file) & FileAttributes.ReadOnly) != 0)
     {
@@ -66,11 +67,8 @@ foreach (string file in logFiles)
 
     string[] splits = elapsedLine.Split(",");
 
-    string minuteString;
-    string secondString;
-
-    int minutes;
-    int seconds;
+    string minuteString, secondString;
+    int minutes, seconds;
 
     if (splits.Length >= 2)
     {
@@ -96,15 +94,16 @@ foreach (var data in stats)
 {
     string mapName = data.Key;
     var time = data.Value;
+    string width = Convert.ToString(time.TotalSeconds / maxTime * 100, CultureInfo.InvariantCulture);
     webTable += @"<div class=""compile-stats-item"">";
     webTable += $"<p class=\"compile-stats-item-name\">{mapName}</p>";
     webTable += $"<p class=\"compile-stats-item-time\">{time.Minutes}m {time.Seconds}s</p>";
     webTable += @"<div class=""compile-stats-item-data"">";
-    webTable += $"<span class=\"compile-stats-item-bar\" style=\"width: {time.TotalSeconds / maxTime * 100}%\"></span>";
-    webTable += @"</div></div>";
+    webTable += $"<span class=\"compile-stats-item-bar\" style=\"width: {width}%\"></span>";
+    webTable += "</div></div>";
 }
 
-webTable += @"</div></body></html>";
+webTable += "</div></body></html>";
 
 File.WriteAllText("compile_stats.json", JsonSerializer.Serialize(stats));
 File.WriteAllText("compile_stats.html", webTable);
